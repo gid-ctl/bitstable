@@ -234,3 +234,11 @@
         (ok (/ (* collateral (var-get last-price)) debt))
     ))
 )
+
+(define-read-only (is-authorized-liquidator (address principal))
+    (default-to false (map-get? liquidators address))
+)
+
+(define-read-only (is-authorized-oracle (address principal))
+    (default-to false (map-get? price-oracles address))
+)
