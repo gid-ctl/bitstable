@@ -192,3 +192,19 @@
         (ok true)
     )
 )
+
+(define-public (add-oracle (oracle principal))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (map-set price-oracles oracle true)
+        (ok true)
+    )
+)
+
+(define-public (remove-oracle (oracle principal))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (map-delete price-oracles oracle)
+        (ok true)
+    )
+)
