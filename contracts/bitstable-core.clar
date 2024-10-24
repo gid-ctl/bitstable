@@ -217,3 +217,20 @@
         (ok true)
     )
 )
+
+;; Read-Only Functions
+(define-read-only (get-vault (owner principal))
+    (map-get? vaults owner)
+)
+
+(define-read-only (get-collateral-ratio (owner principal))
+    (let (
+        (vault (unwrap! (map-get? vaults owner) err-low-balance))
+        (collateral (get collateral vault))
+        (debt (get debt vault))
+    )
+    (if (is-eq debt u0)
+        (ok u0)
+        (ok (/ (* collateral (var-get last-price)) debt))
+    ))
+)
