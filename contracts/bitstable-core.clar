@@ -178,18 +178,29 @@
         (collateral-value (* collateral (var-get last-price)))
     )
     (begin
+        ;; Basic checks
         (asserts! (var-get initialized) err-not-initialized)
         (asserts! (var-get price-valid) err-invalid-price)
         (asserts! (is-authorized-liquidator tx-sender) err-owner-only)
+        
+        ;; Ensure vault exists and has debt
+        (asserts! (> debt u0) err-invalid-parameter)
+        
         ;; Check if vault is below liquidation ratio
         (asserts! (< (* collateral-value u100)
             (* debt (var-get liquidation-ratio)))
             err-insufficient-collateral)
-        ;; Transfer collateral to liquidator
-        (try! (as-contract (stx-transfer? collateral (as-contract tx-sender) tx-sender)))
-        ;; Clear vault
-        (map-delete vaults vault-owner)
-        (ok true)
+            
+        ;; Save collateral locally to ensure consistency
+        (let (
+            (collateral-to-transfer collateral)
+        )
+            ;; Clear vault first to prevent reentrancy
+            (map-delete vaults vault-owner)
+            ;; Transfer collateral to liquidator
+            (try! (as-contract (stx-transfer? collateral-to-transfer (as-contract tx-sender) tx-sender)))
+            (ok true)
+        )
     ))
 )
 
