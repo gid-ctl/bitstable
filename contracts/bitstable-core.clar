@@ -22,3 +22,16 @@
 (define-data-var last-price uint u0) ;; Latest BTC/USD price
 (define-data-var price-valid bool false)
 (define-data-var governance-token principal 'SP000000000000000000002Q6VF78.governance-token)
+
+;; Storage
+(define-map vaults
+    principal
+    {
+        collateral: uint,
+        debt: uint,
+        last-fee-timestamp: uint
+    }
+)
+
+(define-map liquidators principal bool)
+(define-map price-oracles principal bool)
