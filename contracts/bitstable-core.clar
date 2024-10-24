@@ -208,3 +208,12 @@
         (ok true)
     )
 )
+
+;; Emergency Functions
+(define-public (trigger-emergency-shutdown)
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (var-set emergency-shutdown true)
+        (ok true)
+    )
+)
