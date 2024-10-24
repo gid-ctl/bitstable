@@ -152,3 +152,27 @@
     )
 )
 
+;; Governance Functions
+(define-public (set-minimum-collateral-ratio (new-ratio uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (var-set minimum-collateral-ratio new-ratio)
+        (ok true)
+    )
+)
+
+(define-public (set-liquidation-ratio (new-ratio uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (var-set liquidation-ratio new-ratio)
+        (ok true)
+    )
+)
+
+(define-public (set-stability-fee (new-fee uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (var-set stability-fee new-fee)
+        (ok true)
+    )
+)
