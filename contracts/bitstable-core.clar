@@ -1,7 +1,5 @@
-Bitcoin-Backed Stablecoin Smart Contract System
-
 ;; Bitcoin-Backed Stablecoin System
-;; Version: 1.1
+;; Version: 1.2
 ;; A decentralized stablecoin system backed by Bitcoin collateral
 
 ;; Constants
@@ -15,11 +13,11 @@ Bitcoin-Backed Stablecoin Smart Contract System
 (define-constant err-invalid-price (err u106))
 (define-constant err-emergency-shutdown (err u107))
 (define-constant err-invalid-parameter (err u108))
-(define-constant maximum-price uint u1000000000) ;; Maximum allowed price (sanity check)
-(define-constant minimum-price uint u1) ;; Minimum allowed price
-(define-constant maximum-ratio uint u1000) ;; Maximum collateral ratio (1000%)
-(define-constant minimum-ratio uint u101) ;; Minimum collateral ratio (101%)
-(define-constant maximum-fee uint u100) ;; Maximum stability fee (100%)
+(define-constant maximum-price u1000000000) ;; Maximum allowed price (sanity check)
+(define-constant minimum-price u1) ;; Minimum allowed price
+(define-constant maximum-ratio u1000) ;; Maximum collateral ratio (1000%)
+(define-constant minimum-ratio u101) ;; Minimum collateral ratio (101%)
+(define-constant maximum-fee u100) ;; Maximum stability fee (100%)
 
 ;; Data Variables
 (define-data-var minimum-collateral-ratio uint u150) ;; 150% collateralization ratio
@@ -94,6 +92,31 @@ Bitcoin-Backed Stablecoin Smart Contract System
         (map-set vaults tx-sender 
             (merge existing-vault {
                 collateral: (+ collateral-amount (get collateral existing-vault))
+            })
+        )
+        (ok true)
+    ))
+)
+
+(define-public (mint-stablecoin (amount uint))
+    (let (
+        (vault (unwrap! (map-get? vaults tx-sender) err-low-balance))
+        (current-collateral (get collateral vault))
+        (current-debt (get debt vault))
+        (new-debt (+ current-debt amount))
+        (collateral-value (* current-collateral (var-get last-price)))
+    )
+    (begin
+        (asserts! (var-get initialized) err-not-initialized)
+        (asserts! (not (var-get emergency-shutdown)) err-emergency-shutdown)
+        (asserts! (var-get price-valid) err-invalid-price)
+        ;; Check if new debt maintains minimum collateral ratio
+        (asserts! (>= (* collateral-value u100) 
+            (* new-debt (var-get minimum-collateral-ratio))) 
+            err-below-mcr)
+        (map-set vaults tx-sender
+            (merge vault {
+                debt: new-debt
             })
         )
         (ok true)
