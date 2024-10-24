@@ -35,3 +35,15 @@
 
 (define-map liquidators principal bool)
 (define-map price-oracles principal bool)
+
+;; Public Functions
+(define-public (initialize (btc-price uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (not (var-get initialized)) err-already-initialized)
+        (var-set last-price btc-price)
+        (var-set price-valid true)
+        (var-set initialized true)
+        (ok true)
+    )
+)
