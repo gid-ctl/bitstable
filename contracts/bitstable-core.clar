@@ -47,3 +47,27 @@
         (ok true)
     )
 )
+
+(define-public (create-vault (collateral-amount uint))
+    (let (
+        (existing-vault (default-to 
+            {
+                collateral: u0,
+                debt: u0,
+                last-fee-timestamp: (unwrap-panic (get-block-info? time u0))
+            }
+            (map-get? vaults tx-sender)
+        ))
+    )
+    (begin
+        (asserts! (var-get initialized) err-not-initialized)
+        (asserts! (not (var-get emergency-shutdown)) err-emergency-shutdown)
+        (try! (stx-transfer? collateral-amount tx-sender (as-contract tx-sender)))
+        (map-set vaults tx-sender 
+            (merge existing-vault {
+                collateral: (+ collateral-amount (get collateral existing-vault))
+            })
+        )
+        (ok true)
+    ))
+)
