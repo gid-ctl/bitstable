@@ -205,7 +205,6 @@
 )
 
 ;; Governance Functions
-;; Governance Functions
 (define-public (set-minimum-collateral-ratio (new-ratio uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
