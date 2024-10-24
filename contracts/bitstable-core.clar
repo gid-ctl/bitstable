@@ -88,3 +88,32 @@
         (ok true)
     ))
 )
+
+(define-public (withdraw-collateral (amount uint))
+    (let (
+        (vault (unwrap! (map-get? vaults tx-sender) err-low-balance))
+        (current-collateral (get collateral vault))
+        (current-debt (get debt vault))
+        (new-collateral (- current-collateral amount))
+        (collateral-value (* new-collateral (var-get last-price)))
+    )
+    (begin
+        (asserts! (var-get initialized) err-not-initialized)
+        (asserts! (not (var-get emergency-shutdown)) err-emergency-shutdown)
+        (asserts! (var-get price-valid) err-invalid-price)
+        (asserts! (>= current-collateral amount) err-low-balance)
+        ;; Check if withdrawal maintains minimum collateral ratio
+        (asserts! (or
+            (is-eq current-debt u0)
+            (>= (* collateral-value u100)
+                (* current-debt (var-get minimum-collateral-ratio))))
+            err-below-mcr)
+        (try! (as-contract (stx-transfer? amount (as-contract tx-sender) tx-sender)))
+        (map-set vaults tx-sender
+            (merge vault {
+                collateral: new-collateral
+            })
+        )
+        (ok true)
+    ))
+)
