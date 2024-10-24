@@ -117,3 +117,27 @@
         (ok true)
     ))
 )
+
+;; Liquidation Functions
+(define-public (liquidate (vault-owner principal))
+    (let (
+        (vault (unwrap! (map-get? vaults vault-owner) err-low-balance))
+        (collateral (get collateral vault))
+        (debt (get debt vault))
+        (collateral-value (* collateral (var-get last-price)))
+    )
+    (begin
+        (asserts! (var-get initialized) err-not-initialized)
+        (asserts! (var-get price-valid) err-invalid-price)
+        (asserts! (is-authorized-liquidator tx-sender) err-owner-only)
+        ;; Check if vault is below liquidation ratio
+        (asserts! (< (* collateral-value u100)
+            (* debt (var-get liquidation-ratio)))
+            err-insufficient-collateral)
+        ;; Transfer collateral to liquidator
+        (try! (as-contract (stx-transfer? collateral (as-contract tx-sender) tx-sender)))
+        ;; Clear vault
+        (map-delete vaults vault-owner)
+        (ok true)
+    ))
+)
