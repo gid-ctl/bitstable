@@ -1,5 +1,7 @@
+Bitcoin-Backed Stablecoin Smart Contract System
+
 ;; Bitcoin-Backed Stablecoin System
-;; Version: 1.0
+;; Version: 1.1
 ;; A decentralized stablecoin system backed by Bitcoin collateral
 
 ;; Constants
@@ -12,6 +14,12 @@
 (define-constant err-low-balance (err u105))
 (define-constant err-invalid-price (err u106))
 (define-constant err-emergency-shutdown (err u107))
+(define-constant err-invalid-parameter (err u108))
+(define-constant maximum-price uint u1000000000) ;; Maximum allowed price (sanity check)
+(define-constant minimum-price uint u1) ;; Minimum allowed price
+(define-constant maximum-ratio uint u1000) ;; Maximum collateral ratio (1000%)
+(define-constant minimum-ratio uint u101) ;; Minimum collateral ratio (101%)
+(define-constant maximum-fee uint u100) ;; Maximum stability fee (100%)
 
 ;; Data Variables
 (define-data-var minimum-collateral-ratio uint u150) ;; 150% collateralization ratio
@@ -35,6 +43,25 @@
 
 (define-map liquidators principal bool)
 (define-map price-oracles principal bool)
+
+;; Validation Functions
+(define-private (is-valid-price (price uint))
+    (and 
+        (>= price minimum-price)
+        (<= price maximum-price)
+    )
+)
+
+(define-private (is-valid-ratio (ratio uint))
+    (and 
+        (>= ratio minimum-ratio)
+        (<= ratio maximum-ratio)
+    )
+)
+
+(define-private (is-valid-fee (fee uint))
+    (<= fee maximum-fee)
+)
 
 ;; Public Functions
 (define-public (initialize (btc-price uint))
