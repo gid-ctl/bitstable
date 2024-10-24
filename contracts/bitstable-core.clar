@@ -71,3 +71,20 @@
         (ok true)
     ))
 )
+
+(define-public (repay-debt (amount uint))
+    (let (
+        (vault (unwrap! (map-get? vaults tx-sender) err-low-balance))
+        (current-debt (get debt vault))
+    )
+    (begin
+        (asserts! (var-get initialized) err-not-initialized)
+        (asserts! (>= current-debt amount) err-low-balance)
+        (map-set vaults tx-sender
+            (merge vault {
+                debt: (- current-debt amount)
+            })
+        )
+        (ok true)
+    ))
+)
