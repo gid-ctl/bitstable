@@ -68,6 +68,7 @@ Bitcoin-Backed Stablecoin Smart Contract System
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
         (asserts! (not (var-get initialized)) err-already-initialized)
+        (asserts! (is-valid-price btc-price) err-invalid-parameter)
         (var-set last-price btc-price)
         (var-set price-valid true)
         (var-set initialized true)
@@ -173,6 +174,7 @@ Bitcoin-Backed Stablecoin Smart Contract System
 (define-public (update-price (new-price uint))
     (begin
         (asserts! (is-authorized-oracle tx-sender) err-owner-only)
+        (asserts! (is-valid-price new-price) err-invalid-parameter)
         (var-set last-price new-price)
         (var-set price-valid true)
         (ok true)
@@ -180,9 +182,12 @@ Bitcoin-Backed Stablecoin Smart Contract System
 )
 
 ;; Governance Functions
+;; Governance Functions
 (define-public (set-minimum-collateral-ratio (new-ratio uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (is-valid-ratio new-ratio) err-invalid-parameter)
+        (asserts! (> new-ratio (var-get liquidation-ratio)) err-invalid-parameter)
         (var-set minimum-collateral-ratio new-ratio)
         (ok true)
     )
@@ -191,6 +196,8 @@ Bitcoin-Backed Stablecoin Smart Contract System
 (define-public (set-liquidation-ratio (new-ratio uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (is-valid-ratio new-ratio) err-invalid-parameter)
+        (asserts! (< new-ratio (var-get minimum-collateral-ratio)) err-invalid-parameter)
         (var-set liquidation-ratio new-ratio)
         (ok true)
     )
@@ -199,6 +206,7 @@ Bitcoin-Backed Stablecoin Smart Contract System
 (define-public (set-stability-fee (new-fee uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (is-valid-fee new-fee) err-invalid-parameter)
         (var-set stability-fee new-fee)
         (ok true)
     )
@@ -207,6 +215,7 @@ Bitcoin-Backed Stablecoin Smart Contract System
 (define-public (add-liquidator (liquidator principal))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (not (is-authorized-liquidator liquidator)) err-invalid-parameter)
         (map-set liquidators liquidator true)
         (ok true)
     )
@@ -215,6 +224,7 @@ Bitcoin-Backed Stablecoin Smart Contract System
 (define-public (remove-liquidator (liquidator principal))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (is-authorized-liquidator liquidator) err-invalid-parameter)
         (map-delete liquidators liquidator)
         (ok true)
     )
@@ -223,6 +233,7 @@ Bitcoin-Backed Stablecoin Smart Contract System
 (define-public (add-oracle (oracle principal))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (not (is-authorized-oracle oracle)) err-invalid-parameter)
         (map-set price-oracles oracle true)
         (ok true)
     )
@@ -231,6 +242,7 @@ Bitcoin-Backed Stablecoin Smart Contract System
 (define-public (remove-oracle (oracle principal))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (is-authorized-oracle oracle) err-invalid-parameter)
         (map-delete price-oracles oracle)
         (ok true)
     )
